@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta Premiada</title>
+    <style>
+        /* Estilos CSS para a Roleta */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .roleta-container {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 10px solid #333;
+            position: relative;
+            overflow: hidden;
+            background-color: #eee;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        .roleta-segmento {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: 50% 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            box-sizing: border-box;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .roleta-segmento:nth-child(1) { background-color: #FF6347; transform: rotate(0deg) skewY(-30deg); } /* 100 */
+        .roleta-segmento:nth-child(2) { background-color: #4682B4; transform: rotate(60deg) skewY(-30deg); } /* 500 */
+        .roleta-segmento:nth-child(3) { background-color: #3CB371; transform: rotate(120deg) skewY(-30deg); } /* 1000 */
+        .roleta-segmento:nth-child(4) { background-color: #FFD700; transform: rotate(180deg) skewY(-30deg); } /* 100 */
+        .roleta-segmento:nth-child(5) { background-color: #DA70D6; transform: rotate(240deg) skewY(-30deg); } /* 500 */
+        .roleta-segmento:nth-child(6) { background-color: #1E90FF; transform: rotate(300deg) skewY(-30deg); } /* 1000 */
+
+
+        .roleta-segmento span {
+            display: block;
+            transform: skewY(30deg) rotate(30deg); /* Ajuste para endireitar o texto */
+        }
+
+        .ponteiro {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid red;
+            position: absolute;
+            top: -15px; /* Ajusta a posição para ficar acima da roleta */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .girar-btn {
+            margin-top: 30px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .girar-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .resultado {
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Roleta Premiada</h1>
+
+    <div class="roleta-container" id="roleta">
+        <div class="ponteiro"></div>
+        <div class="roleta-segmento" data-value="100"><span>100</span></div>
+        <div class="roleta-segmento" data-value="500"><span>500</span></div>
+        <div class="roleta-segmento" data-value="1000"><span>1000</span></div>
+        <div class="roleta-segmento" data-value="100"><span>100</span></div>
+        <div class="roleta-segmento" data-value="500"><span>500</span></div>
+        <div class="roleta-segmento" data-value="1000"><span>1000</span></div>
+    </div>
+
+    <button class="girar-btn" id="girarBtn">Girar Roleta</button>
+    <p class="resultado" id="resultado"></p>
+
+    <script>
+        // JavaScript para a Roleta
+        const roleta = document.getElementById('roleta');
+        const girarBtn = document.getElementById('girarBtn');
+        const resultadoDisplay = document.getElementById('resultado');
+
+        const valores = [100, 500, 1000, 100, 500, 1000]; // Valores dos segmentos
+        const anguloSegmento = 360 / valores.length; // Ângulo de cada segmento
+
+        girarBtn.addEventListener('click', girarRoleta);
+
+        function girarRoleta() {
+            // Desabilita o botão para evitar múltiplos giros
+            girarBtn.disabled = true;
+            resultadoDisplay.textContent = 'Girando...';
+
+            // Gera um ângulo aleatório para a roleta parar
+            const numGirosCompletos = 5; // Garante que a roleta dê algumas voltas
+            const anguloParadaAleatorio = Math.floor(Math.random() * 360); // Ponto aleatório no círculo
+            const anguloFinal = (numGirosCompletos * 360) + anguloParadaAleatorio;
+
+            // Transição suave para o giro
+            roleta.style.transition = 'transform 4s ease-out';
+            roleta.style.transform = `rotate(${anguloFinal}deg)`;
+
+            // Após a transição, calcula o resultado
+            roleta.addEventListener('transitionend', () => {
+                // Remove a transição para permitir o reset sem animação
+                roleta.style.transition = 'none';
+
+                // Calcula o ângulo real da roleta após o giro (normaliza para 0-359)
+                const anguloReal = anguloFinal % 360;
+
+                // Determina qual segmento parou no ponteiro
+                let indiceGanhador = -1;
+                for (let i = 0; i < valores.length; i++) {
+                    const inicioSegmento = i * anguloSegmento;
+                    const fimSegmento = (i + 1) * anguloSegmento;
+
+                    // Ajusta o ângulo para o centro do ponteiro
+                    const anguloPonteiro = 90; // Exemplo: Se o ponteiro estiver em cima, 90 graus para o primeiro segmento
+                    const anguloAjustado = (360 - anguloReal + anguloPonteiro) % 360; // Inverte e ajusta para o ponteiro
+
+                    if (anguloAjustado >= inicioSegmento && anguloAjustado < fimSegmento) {
+                        indiceGanhador = i;
+                        break;
+                    }
+                }
+
+                if (indiceGanhador !== -1) {
+                    const valorGanho = valores[indiceGanhador];
+                    resultadoDisplay.textContent = `Você ganhou: ${valorGanho}!`;
+                    // Aqui você adicionaria a lógica para adicionar a pontuação ao usuário
+                    // E também a lógica para verificar se ele já girou no dia
+                } else {
+                    resultadoDisplay.textContent = 'Erro ao determinar o resultado.';
+                }
+
+                // Reabilita o botão
+                girarBtn.disabled = false;
+
+                // Opcional: Resetar a roleta para a posição inicial para o próximo giro
+                // roleta.style.transform = 'rotate(0deg)';
+
+            }, { once: true }); // Executa o listener apenas uma vez
+        }
+    </script>
+</body>
+</html>
